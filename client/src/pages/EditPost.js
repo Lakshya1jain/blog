@@ -9,6 +9,7 @@ export default function EditPost() {
   const [content,setContent] = useState('');
   const [files, setFiles] = useState('');
   const [redirect,setRedirect] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('http://localhost:4000/post/'+id)
@@ -17,9 +18,10 @@ export default function EditPost() {
           setTitle(postInfo.title);
           setContent(postInfo.content);
           setSummary(postInfo.summary);
+          setLoading(false);
         });
       });
-  }, []);
+  }, [id]);
 
   async function updatePost(ev) {
     ev.preventDefault();
@@ -45,20 +47,43 @@ export default function EditPost() {
     return <Navigate to={'/post/'+id} />
   }
 
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading post...</p>
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={updatePost}>
-      <input type="title"
-             placeholder={'Title'}
-             value={title}
-             onChange={ev => setTitle(ev.target.value)} />
-      <input type="summary"
-             placeholder={'Summary'}
-             value={summary}
-             onChange={ev => setSummary(ev.target.value)} />
-      <input type="file"
-             onChange={ev => setFiles(ev.target.files)} />
+    <form className="edit-post" onSubmit={updatePost}>
+      <h1>Edit Post</h1>
+      <input 
+        type="title"
+        placeholder={'Title'}
+        value={title}
+        onChange={ev => setTitle(ev.target.value)} 
+      />
+      <input 
+        type="summary"
+        placeholder={'Summary'}
+        value={summary}
+        onChange={ev => setSummary(ev.target.value)} 
+      />
+      <input 
+        type="file"
+        onChange={ev => setFiles(ev.target.files)} 
+      />
       <Editor onChange={setContent} value={content} />
-      <button style={{marginTop:'5px'}}>Update post</button>
+      <div className="edit-buttons">
+        <button type="submit" className="save-button">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          Save changes
+        </button>
+      </div>
     </form>
   );
 }

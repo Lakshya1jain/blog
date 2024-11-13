@@ -31,19 +31,20 @@ export default function CreatePost() {
     return <Navigate to={'/'} />
   }
   return (
-    <form onSubmit={createNewPost}>
+    <form className="create-post" onSubmit={createNewPost}>
+      <h1>Create New Post</h1>
       <input type="title"
-             placeholder={'Title'}
+             placeholder={'Post Title'}
              value={title}
              onChange={ev => setTitle(ev.target.value)} />
       <input type="summary"
-             placeholder={'Summary'}
+             placeholder={'Summary of your post'}
              value={summary}
              onChange={ev => setSummary(ev.target.value)} />
       <input type="file"
              onChange={ev => setFiles(ev.target.files)} />
       <Editor value={content} onChange={setContent} />
-      <button style={{marginTop:'5px'}}>Create post</button>
+      <button>Create Post</button>
     </form>
   );
 }

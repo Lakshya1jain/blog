@@ -1,4 +1,14 @@
 {
+  "name": "blog-app",
+  "version": "1.0.0",
+  "description": "Blog application with MERN stack",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run start:api & npm run start:client",
+    "start:api": "cd api && npm run start",
+    "start:client": "cd client && npm start",
+    "install:all": "npm install && cd api && npm install && cd ../client && npm install"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",

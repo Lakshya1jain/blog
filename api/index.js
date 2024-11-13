@@ -10,16 +10,28 @@ const cookieParser = require('cookie-parser');
 const multer = require('multer');
 const uploadMiddleware = multer({ dest: 'uploads/' });
 const fs = require('fs');
+require('dotenv').config();
 
 const salt = bcrypt.genSaltSync(10);
-const secret = 'asdfe45we45w345wegw345werjktjwertkj';
+const secret = process.env.JWT_SECRET;
 
 app.use(cors({credentials:true,origin:'http://localhost:3000'}));
 app.use(express.json());
 app.use(cookieParser());
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
-mongoose.connect('mongodb+srv://blog:RD8paskYC8Ayj09u@cluster0.pflplid.mongodb.net/?retryWrites=true&w=majority');
+// Add this line before mongoose.connect
+mongoose.set('strictQuery', false);
+
+// MongoDB connection with error handling
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('Connected to MongoDB successfully');
+  })
+  .catch((error) => {
+    console.error('Error connecting to MongoDB:', error);
+    console.error('MONGODB_URI:', process.env.MONGODB_URI);
+  });
 
 app.post('/register', async (req,res) => {
   const {username,password} = req.body;
@@ -134,5 +146,61 @@ app.get('/post/:id', async (req, res) => {
   res.json(postDoc);
 })
 
-app.listen(4000);
+// Add delete endpoint
+app.delete('/post/:id', async (req, res) => {
+  console.log('Delete request received for post:', req.params.id);
+  
+  const {token} = req.cookies;
+  if (!token) {
+    console.log('No authentication token found');
+    return res.status(401).json('Not authenticated');
+  }
+
+  try {
+    // Verify user
+    const info = await jwt.verify(token, secret);
+    console.log('User verified:', info);
+
+    const postId = req.params.id;
+    const post = await Post.findById(postId);
+    
+    if (!post) {
+      console.log('Post not found:', postId);
+      return res.status(404).json('Post not found');
+    }
+
+    // Check if user is the author
+    const isAuthor = JSON.stringify(post.author) === JSON.stringify(info.id);
+    if (!isAuthor) {
+      console.log('User not authorized to delete this post');
+      return res.status(403).json('You are not authorized to delete this post');
+    }
+
+    // Delete the post's image if it exists
+    if (post.cover) {
+      const imagePath = __dirname + '/' + post.cover;
+      console.log('Attempting to delete image:', imagePath);
+      try {
+        fs.unlinkSync(imagePath);
+        console.log('Post image deleted successfully');
+      } catch (err) {
+        console.error('Error deleting post image:', err);
+      }
+    }
+
+    // Delete the post
+    await Post.findByIdAndDelete(postId);
+    console.log('Post deleted successfully');
+    
+    res.json('Post deleted successfully');
+  } catch (err) {
+    console.error('Error in delete endpoint:', err);
+    res.status(500).json('Error deleting post');
+  }
+});
+
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 //
